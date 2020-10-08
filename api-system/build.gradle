@@ -1,0 +1,16 @@
+dependencies {
+    //implementation (project (":api-common"))
+    // 추후 공통으로 이동 필요
+    implementation "org.modelmapper:modelmapper:2.3.7"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.postgresql:postgresql"
+    implementation "com.querydsl:querydsl-jpa"
+    implementation "com.querydsl:querydsl-apt"
+    implementation "com.querydsl:querydsl-core"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client"
+    implementation "com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.3"
+    implementation "org.springframework.cloud:spring-cloud-starter-oauth2"
+    implementation "org.springframework.cloud:spring-cloud-starter-zipkin"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+}

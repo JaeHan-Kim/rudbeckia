@@ -1,0 +1,124 @@
+buildscript {
+    ext {
+        springBootVersion = '2.3.4.RELEASE'
+        querydslPluginVersion = "1.0.10"
+    }
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" } // plugin 저장소
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.7.RELEASE"
+        classpath("gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:${querydslPluginVersion}")
+    }
+}
+plugins {
+    id 'com.google.cloud.tools.jib' version '2.5.0' apply false
+}
+def querydslProjects = [
+    project(":api-member"), project(":api-system"), /*project(":api-auth")*/
+]
+
+configure(querydslProjects) {
+
+    apply plugin: "com.ewerk.gradle.plugins.querydsl"
+
+    def querydslSrcDir = 'src/main/generated'
+
+    querydsl {
+        library = "com.querydsl:querydsl-apt"
+        jpa = true
+        querydslSourcesDir = querydslSrcDir
+    }
+
+    compileQuerydsl{
+        options.annotationProcessorPath = configurations.querydsl
+    }
+    
+    configurations {
+        querydsl.extendsFrom compileClasspath
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src/main/java', querydslSrcDir]
+            }
+        }
+    }
+    
+    tasks.withType(JavaCompile) {
+        options.annotationProcessorGeneratedSourcesDirectory = file(querydslSrcDir)
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+    apply plugin: "eclipse"
+    apply plugin: "org.springframework.boot"
+    apply plugin: "io.spring.dependency-management"
+    apply plugin: "com.google.cloud.tools.jib"
+
+    group = "com.rudbeckia"
+    version = "0.0.1-SNAPSHOT"
+
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    repositories {
+        mavenCentral()
+    }
+
+    configurations {
+        developmentOnly
+        runtimeClasspath {
+            extendsFrom developmentOnly
+        }
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    ext {
+        set("springCloudVersion", "Hoxton.SR4")
+    }
+
+
+    task initSourceFolders {
+        sourceSets*.java.srcDirs*.each {
+            if( !it.exists() ) {
+                it.mkdirs()
+            }
+        }
+
+        sourceSets*.resources.srcDirs*.each {
+            if( !it.exists() ) {
+                it.mkdirs()
+            }
+        }
+    }
+
+    dependencies {
+        compileOnly "org.projectlombok:lombok"
+        annotationProcessor "org.projectlombok:lombok"
+        implementation "org.apache.commons:commons-lang3:3.9"
+        implementation "net.logstash.logback:logstash-logback-encoder:6.4"
+        implementation "org.springframework.boot:spring-boot-starter-validation"
+        implementation "org.springframework.boot:spring-boot-starter-actuator"
+        developmentOnly "org.springframework.boot:spring-boot-devtools"
+        testImplementation("org.springframework.boot:spring-boot-starter-test") {
+            exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+}
